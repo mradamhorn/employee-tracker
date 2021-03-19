@@ -1,5 +1,6 @@
 const connection = require('./db/connection');
 const inquirer = require('inquirer');
+const mysql = require('mysql');
 
 
 
@@ -92,15 +93,48 @@ const addDepartment = () => {
         message: 'What is the new department you would like to add?',
     })
         .then((answer) => {
-            const query = 'INSERT INTO department (name) VALUES ?''
-            connection.query(query, { department: answer.department }, (err, res) => {
+            const query = 'INSERT INTO department SET ?';
+            connection.query(query, { name: answer.department }, (err, res) => {
                 if (err) throw err;
-
-
                 console.table(res);
             })
 
         })
+}
+
+const addRole = () => {
+    connection.query('SELECT id, name FROM department', (err, res) => {
+        inquirer.prompt([
+            {
+                name: 'role',
+                type: 'input',
+                message: 'What is the role you want to add?',
+            },
+            {
+                name: 'salary',
+                type: 'number',
+                message: 'What salary does this role have?',
+            },
+            {
+                name: 'deptId',
+                type: 'list',
+                message: 'Select the department this role belongs in:',
+                choices: res
+            }
+        ])
+            .then((answer) => {
+                const query = 'INSERT INTO role SET ?';
+                const indexMatch = res.findIndex({ name: answer.deptId });
+                console.log(indexMatch);
+                connection.query(query, [{ title: answer.role, salary: answer.salary, department_id: res[indexMatch].id }], (err, res) => {
+                    if (err) throw err;
+                    console.table(res);
+                })
+
+            })
+    })
+
+
 }
 
 init();
