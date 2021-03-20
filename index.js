@@ -123,18 +123,68 @@ const addRole = () => {
             }
         ])
             .then((answer) => {
-                const query = 'INSERT INTO role SET ?';
-                const indexMatch = res.findIndex({ name: answer.deptId });
-                console.log(indexMatch);
-                connection.query(query, [{ title: answer.role, salary: answer.salary, department_id: res[indexMatch].id }], (err, res) => {
+                const query = 'INSERT INTO roles SET ?';
+                const deptMatch = res.find((department) => {
+                    return department.name === answer.deptId;
+                });
+                connection.query(query, [{ title: answer.role, salary: answer.salary, department_id: deptMatch.id }], (err, res) => {
                     if (err) throw err;
                     console.table(res);
                 })
-
             })
     })
+}
 
-
+const addEmployee = () => {
+    connection.query('SELECT id, title AS name FROM roles', (err, resRole) => {
+        connection.query('SELECT CONCAT(first_name, " ", last_name) AS name FROM employee', (err, resEmp) => {
+            inquirer.prompt([
+                {
+                    name: 'firstName',
+                    type: 'input',
+                    message: 'Enter the employee\'s first name:',
+                },
+                {
+                    name: 'lastName',
+                    type: 'input',
+                    message: 'Enter the employee\'s last name:',
+                },
+                {
+                    name: 'roleId',
+                    type: 'list',
+                    message: 'Select the employee\'s role:',
+                    choices: resRole
+                },
+                {
+                    name: 'manager',
+                    type: 'list',
+                    message: 'Does this employee report to anyone?',
+                    choices: ['Yes', 'No']
+                }
+            ])
+                .then((answer) => {
+                    if (answer.manager === 'Yes') {
+                        inquirer.prompt([
+                            {
+                                name: 'managerId',
+                                type: 'list',
+                                message: 'Select the employee\'s manager:',
+                                choices: resEmp
+                            }
+                        ])
+                    }
+                    const query = 'INSERT INTO employee SET ?'; // <== Pick up here
+                    const deptMatch = res.find((department) => {
+                        return department.name === answer.deptId;
+                    });
+                    console.log(deptMatch);
+                    connection.query(query, [{ title: answer.role, salary: answer.salary, department_id: deptMatch.id }], (err, res) => {
+                        if (err) throw err;
+                        console.table(res);
+                    })
+                })
+        })
+    })
 }
 
 init();
