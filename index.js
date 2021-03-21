@@ -66,6 +66,7 @@ const viewDepartment = () => {
     connection.query('SELECT name AS Department FROM department', (err, res) => {
         if (err) throw err;
         console.table(res);
+        init();
     })
 }
 
@@ -74,6 +75,7 @@ const viewRole = () => {
     connection.query('SELECT title AS Role, salary AS Salary FROM role', (err, res) => {
         if (err) throw err;
         console.table(res);
+        init();
     })
 }
 
@@ -82,6 +84,7 @@ const viewEmployee = () => {
     connection.query('SELECT CONCAT(first_name, " ", last_name) AS Employee FROM employee', (err, res) => {
         if (err) throw err;
         console.table(res);
+        init();
     })
 }
 
@@ -96,7 +99,7 @@ const addDepartment = () => {
             const query = 'INSERT INTO department SET ?';
             connection.query(query, { name: answer.department }, (err, res) => {
                 if (err) throw err;
-                console.table(res);
+                init();
             })
 
         })
@@ -129,7 +132,7 @@ const addRole = () => {
                 });
                 connection.query(query, [{ title: answer.role, salary: answer.salary, department_id: deptMatch.id }], (err, res) => {
                     if (err) throw err;
-                    console.table(res);
+                    init();
                 })
             })
     })
@@ -137,7 +140,7 @@ const addRole = () => {
 
 const addEmployee = () => {
     connection.query('SELECT id, title AS name FROM roles', (err, resRole) => {
-        connection.query('SELECT CONCAT(first_name, " ", last_name) AS name FROM employee', (err, resEmp) => {
+        connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (err, resEmp) => {
             inquirer.prompt([
                 {
                     name: 'firstName',
@@ -163,6 +166,12 @@ const addEmployee = () => {
                 }
             ])
                 .then((answer) => {
+                    const query = 'INSERT INTO employee SET ?';
+
+                    const roleMatch = resRole.find((employee) => {
+                        return employee.name === answer.roleId;
+                    });
+
                     if (answer.manager === 'Yes') {
                         inquirer.prompt([
                             {
@@ -172,19 +181,96 @@ const addEmployee = () => {
                                 choices: resEmp
                             }
                         ])
+                            .then((manager) => {
+                                const manMatch = resEmp.find((employee) => {
+                                    return employee.name === manager.managerId;
+                                });
+
+                                connection.query(query, [{ first_name: answer.firstName, last_name: answer.lastName, role_id: roleMatch.id, manager_id: manMatch.id }], (err, res) => {
+                                    if (err) throw err;
+                                    init();
+                                })
+                            })
+                    } else {
+                        connection.query(query, [{ first_name: answer.firstName, last_name: answer.lastName, role_id: roleMatch.id }], (err, res) => {
+                            if (err) throw err;
+                            init();
+                        })
                     }
-                    const query = 'INSERT INTO employee SET ?'; // <== Pick up here
-                    const deptMatch = res.find((department) => {
-                        return department.name === answer.deptId;
+                })
+
+
+
+        })
+    })
+}
+
+
+const updateEmployee = () => {
+    connection.query('SELECT id, title AS name FROM roles', (err, resRole) => {
+        connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (err, resEmp) => {
+            inquirer.prompt([
+                {
+                    name: 'employee',
+                    type: 'list',
+                    message: 'Which employee are you updating?',
+                    choices: resEmp
+                },
+                {
+                    name: 'newRole',
+                    type: 'list',
+                    message: 'What is the employee\'s new role?',
+                    choices: resRole
+                },
+                {
+                    name: 'newManager',
+                    type: 'list',
+                    message: 'Will this employee report to anyone?',
+                    choices: ['Yes', 'No']
+                }
+            ])
+                .then((answer) => {
+                    const query = 'UPDATE employee SET ? WHERE ?';
+
+                    const roleMatch = resRole.find((employee) => {
+                        return employee.name === answer.newRole;
                     });
-                    console.log(deptMatch);
-                    connection.query(query, [{ title: answer.role, salary: answer.salary, department_id: deptMatch.id }], (err, res) => {
-                        if (err) throw err;
-                        console.table(res);
-                    })
+
+                    const empMatch = resEmp.find((employee) => {
+                        return employee.name === answer.employee;
+                    });
+
+                    console.log(roleMatch)
+
+                    if (answer.newManager === 'Yes') {
+                        inquirer.prompt([
+                            {
+                                name: 'managerId',
+                                type: 'list',
+                                message: 'Select the employee\'s new manager:',
+                                choices: resEmp
+                            }
+                        ])
+                            .then((manager) => {
+                                const manMatch = resEmp.find((employee) => {
+                                    return employee.name === manager.managerId;
+                                });
+
+                                connection.query(query, [{ role_id: roleMatch.id, manager_id: manMatch.id }, { id: empMatch.id }], (err, res) => {
+                                    if (err) throw err;
+                                    init();
+                                })
+                            })
+                    } else {
+                        connection.query(query, [{ role_id: roleMatch.id }, { id: empMatch.id }], (err, res) => {
+                            if (err) throw err;
+                            init();
+                        })
+                    }
                 })
         })
     })
 }
+
 
 init();
