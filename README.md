@@ -9,6 +9,9 @@
 - [Questions](#questions)
 - [License](#license)
 
+## Instructional Video
+  [Instructional Video](https://drive.google.com/file/d/1320bArvWYiP7KEDWObeHDp3lhEyvJevk/view)
+
 ---
 
 ## Description

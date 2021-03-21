@@ -72,7 +72,7 @@ const viewDepartment = () => {
 
 // Gets the 'role' table from 'workplaceDB' in sql
 const viewRole = () => {
-    connection.query('SELECT title AS Role, salary AS Salary FROM role', (err, res) => {
+    connection.query('SELECT title AS Role, salary AS Salary FROM roles', (err, res) => {
         if (err) throw err;
         console.table(res);
         init();
